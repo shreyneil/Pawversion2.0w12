@@ -658,7 +658,7 @@ const HealthTracker: React.FC<Props> = ({ pets, logs, onAddLog }) => {
           <div className="absolute top-0 right-0 w-20 h-20 bg-orange-50 rounded-bl-[2.5rem] -mr-6 -mt-6 z-0"></div>
           <Thermometer className="text-orange-500 relative z-10" size={24} />
           <div>
-             <span className="text-2xl font-black text-slate-800 relative z-10">{avgTemp}{avgTemp !== 'N/A' && '°F'}</span>
+             <span className="text-2xl font-black text-slate-800 relative z-10">{avgTemp}{avgTemp !== 'N/A' && '°C'}</span>
              <div className="flex items-center gap-1">
                 <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest relative z-10">Avg. Temp</span>
              </div>
@@ -1114,15 +1114,15 @@ const AddTempModal = ({ pets, initialPetId, onClose, onSubmit }: any) => {
                  </div>
 
                  <div className="relative">
-                    <input 
-                        type="number" 
-                        placeholder="101.5"
+                    <input
+                        type="number"
+                        placeholder="38.6"
                         value={formData.value}
                         onChange={e => setFormData({...formData, value: e.target.value})}
                         className="w-full p-4 text-center text-3xl font-black text-slate-800 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500/20"
                         autoFocus
                     />
-                    <span className="absolute right-8 top-1/2 -translate-y-1/2 font-black text-slate-300">°F</span>
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 font-black text-slate-300">°C</span>
                  </div>
 
                  <input 
