@@ -1,25 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Pet, HealthLog } from '../types';
-import {
-  Plus,
-  ChevronRight,
-  Info,
-  ArrowLeft,
-  QrCode,
-  MapPin,
-  Weight,
-  Calendar as CalendarIcon,
-  Calendar,
-  MoreVertical,
-  Activity,
-  AlertCircle,
-  X,
-  Share2,
-  Trash2,
-  Edit2,
-  Download,
-  Upload
-} from 'lucide-react';
+import { Plus, ChevronRight, Info, ArrowLeft, QrCode, MapPin, Weight, Calendar as CalendarIcon, Calendar, MoveVertical as MoreVertical, Activity, CircleAlert as AlertCircle, X, Share2, Trash2, CreditCard as Edit2, Download, Upload } from 'lucide-react';
 
 interface Props {
   pets: Pet[];
