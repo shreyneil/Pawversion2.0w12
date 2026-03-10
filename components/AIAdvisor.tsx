@@ -9,19 +9,37 @@ interface Props {
 // Replace this with your actual Render URL after deployment
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 
+const getInitialMessage = (pets: Pet[]) => {
+  if (pets.length === 0) {
+    return "Woof! I'm your PawPal AI Expert. Add your pets to get personalized care advice!";
+  }
+  const petNames = pets.map(p => p.name).join(' and ');
+  return `Woof! I'm your PawPal AI Expert. I have all the records for ${petNames} ready. How can I assist you with their care today?`;
+};
+
 const AIAdvisor: React.FC<Props> = ({ pets }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', content: "Woof! I'm your PawPal AI Expert. I have all the records for Luna and Oliver ready. How can I assist you with their care today?" }
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    { role: 'model', content: getInitialMessage(pets) }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const suggestedTopics = [
-    { label: 'Nutrition', icon: <Heart size={14} />, prompt: "What's the best diet for my pets?" },
-    { label: 'Health Check', icon: <Info size={14} />, prompt: "Check Luna's latest vaccination status." },
-    { label: 'Training', icon: <Brain size={14} />, prompt: "How do I teach Oliver new tricks?" }
-  ];
+  useEffect(() => {
+    setMessages([{ role: 'model', content: getInitialMessage(pets) }]);
+  }, [pets.map(p => p.id).join(',')]);
+
+  const suggestedTopics = pets.length > 0
+    ? [
+        { label: 'Nutrition', icon: <Heart size={14} />, prompt: `What's the best diet for ${pets[0].name}?` },
+        { label: 'Health Check', icon: <Info size={14} />, prompt: `Based on ${pets[0].name}'s age, what health checks are needed?` },
+        { label: 'Training', icon: <Brain size={14} />, prompt: pets.length > 1 ? `Give me a training tip for ${pets[0].name} and ${pets[1].name}.` : `Give me a fun training tip for ${pets[0].name}.` }
+      ]
+    : [
+        { label: 'Nutrition', icon: <Heart size={14} />, prompt: "What's the best diet for my pets?" },
+        { label: 'Health Check', icon: <Info size={14} />, prompt: "What health checks should my pet have?" },
+        { label: 'Training', icon: <Brain size={14} />, prompt: "Give me a fun training tip for my pet." }
+      ];
 
   useEffect(() => {
     if (scrollRef.current) {
