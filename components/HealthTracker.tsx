@@ -1,37 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Pet, HealthLog } from '../types';
-import { 
-  FileText, 
-  PlusCircle, 
-  Thermometer, 
-  ShieldCheck, 
-  MapPin, 
-  Navigation, 
-  Stethoscope, 
-  AlertCircle, 
-  ChevronLeft, 
-  ChevronRight, 
-  RefreshCw, 
-  Star, 
-  X, 
-  Activity, 
-  Syringe, 
-  Pill, 
-  History, 
-  Plus, 
-  Upload, 
-  File, 
-  Zap, 
-  Info, 
-  Phone, 
-  SlidersHorizontal, 
-  Check,
-  ArrowRight,
-  Shield,
-  ExternalLink,
-  Calendar
-} from 'lucide-react';
+import { FileText, CirclePlus as PlusCircle, Thermometer, ShieldCheck, MapPin, Navigation, Stethoscope, CircleAlert as AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Star, X, Activity, Syringe, Pill, History, Plus, Upload, File, Zap, Info, Phone, SlidersHorizontal, Check, ArrowRight, Shield, ExternalLink, Calendar } from 'lucide-react';
 
 interface Props {
   pets: Pet[];
