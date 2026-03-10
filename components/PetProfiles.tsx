@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pet, HealthLog } from '../types';
-import { 
-  Plus, 
-  ChevronRight, 
-  Info, 
-  ArrowLeft, 
-  QrCode, 
-  MapPin, 
-  Weight, 
-  Calendar as CalendarIcon, 
-  MoreVertical, 
-  Activity, 
+import {
+  Plus,
+  ChevronRight,
+  Info,
+  ArrowLeft,
+  QrCode,
+  MapPin,
+  Weight,
+  Calendar as CalendarIcon,
+  Calendar,
+  MoreVertical,
+  Activity,
   AlertCircle,
   X,
   Share2,
   Trash2,
   Edit2,
-  Download
+  Download,
+  Upload
 } from 'lucide-react';
 
 interface Props {
@@ -33,7 +35,11 @@ interface Props {
 const PetProfiles: React.FC<Props> = ({ pets, onAddPet, initialSelectedId, onClearSelection, onRemovePet, onEditPet, logs, onAddLog }) => {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [showHealthModal, setShowHealthModal] = useState(false);
-  const [newIssue, setNewIssue] = useState('');
+  const [healthType, setHealthType] = useState<'Checkup' | 'Vaccination' | 'Medication' | 'Note'>('Checkup');
+  const [healthDate, setHealthDate] = useState(new Date().toISOString().split('T')[0]);
+  const [healthDesc, setHealthDesc] = useState('');
+  const [healthDocs, setHealthDocs] = useState<string[]>([]);
+  const healthFileRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
@@ -106,19 +112,29 @@ const PetProfiles: React.FC<Props> = ({ pets, onAddPet, initialSelectedId, onCle
   };
 
   const handleAddHealthIssue = () => {
-    if (!selectedPet || !newIssue.trim()) return;
-    
+    if (!selectedPet || !healthDesc.trim()) return;
+
     const newLog: HealthLog = {
       id: Math.random().toString(36).substr(2, 9),
       petId: selectedPet.id,
-      type: 'Note',
-      date: new Date().toISOString().split('T')[0],
-      description: `Condition/Allergy: ${newIssue}`
+      type: healthType,
+      date: healthDate,
+      description: healthDesc,
+      attachments: healthDocs
     };
-    
+
     onAddLog(newLog);
-    setNewIssue('');
+    setHealthDesc('');
+    setHealthDocs([]);
+    setHealthType('Checkup');
+    setHealthDate(new Date().toISOString().split('T')[0]);
     setShowHealthModal(false);
+  };
+
+  const handleHealthFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setHealthDocs(prev => [...prev, e.target.files![0].name]);
+    }
   };
 
   const petLogs = selectedPet ? logs.filter(log => log.petId === selectedPet.id) : [];
@@ -382,37 +398,56 @@ const PetProfiles: React.FC<Props> = ({ pets, onAddPet, initialSelectedId, onCle
         </div>
 
         {showHealthModal && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
-             <div className="w-full sm:w-[90%] sm:max-w-sm bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-in slide-in-from-bottom duration-300 shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                   <h3 className="text-xl font-black text-slate-800">Add Health Record</h3>
-                   <button onClick={() => setShowHealthModal(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><X size={20} /></button>
+          <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-end sm:items-center justify-center p-4 sm:p-0">
+            <div className="w-full sm:w-[500px] bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-slate-800">Add Health Record</h3>
+                <button onClick={() => setShowHealthModal(false)} className="p-2 bg-slate-50 rounded-full text-slate-400"><X size={20} /></button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {(['Checkup', 'Vaccination', 'Medication', 'Note'] as const).map(t => (
+                    <button key={t} onClick={() => setHealthType(t)} className={`py-3 rounded-xl text-xs font-black uppercase tracking-wide border ${healthType === t ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-50 border-slate-50 text-slate-500'}`}>
+                      {t}
+                    </button>
+                  ))}
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2 block">Description (e.g. Peanut Allergy)</label>
-                    <input 
-                      type="text" 
-                      value={newIssue}
-                      onChange={(e) => setNewIssue(e.target.value)}
-                      placeholder="Enter allergy or condition..."
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                      autoFocus
-                    />
+
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar size={16} className="text-slate-400" />
+                    <input type="date" value={healthDate} onChange={e => setHealthDate(e.target.value)} className="bg-transparent font-bold text-slate-800 text-sm outline-none" />
                   </div>
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl text-blue-600 text-xs font-medium">
-                     <Info size={16} />
-                     <span>This will be added to the Health Tab automatically.</span>
-                  </div>
-                  <button 
-                    onClick={handleAddHealthIssue}
-                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg active:scale-[0.98] transition-all"
-                  >
-                    Save Record
+                  <textarea
+                    rows={3}
+                    placeholder={healthType === 'Medication' ? "Medicine name, dosage & frequency..." : "Describe health event..."}
+                    value={healthDesc}
+                    onChange={e => setHealthDesc(e.target.value)}
+                    className="w-full bg-transparent font-medium text-slate-700 text-sm outline-none resize-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <input type="file" ref={healthFileRef} className="hidden" onChange={handleHealthFileChange} />
+                  <button onClick={() => healthFileRef.current?.click()} className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors mb-2">
+                    <Upload size={14} /> Attach Documents
                   </button>
+                  {healthDocs.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {healthDocs.map((doc, i) => (
+                        <span key={i} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                          {doc} <button onClick={() => setHealthDocs(prev => prev.filter((_, idx) => idx !== i))}><X size={10} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-             </div>
+
+                <button onClick={handleAddHealthIssue} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg active:scale-[0.98] transition-all">
+                  Save Record
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

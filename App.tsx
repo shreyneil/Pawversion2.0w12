@@ -1232,11 +1232,11 @@ const AddPetModal = ({ onClose, onSubmit, initialData }: any) => {
   
   const [tempTags, setTempTags] = useState(initialData?.temperament?.join(', ') || '');
   const [pendingLogs, setPendingLogs] = useState<HealthLog[]>([]);
-  const [newLogData, setNewLogData] = useState<Partial<HealthLog>>({ 
-      type: 'Checkup', 
-      date: new Date().toISOString().split('T')[0], 
-      description: '' 
-  });
+  const [newLogType, setNewLogType] = useState<'Checkup' | 'Vaccination' | 'Medication' | 'Note'>('Checkup');
+  const [newLogDate, setNewLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newLogDesc, setNewLogDesc] = useState('');
+  const [newLogDocs, setNewLogDocs] = useState<string[]>([]);
+  const healthFileRef = useRef<HTMLInputElement>(null);
 
   const COMMON_TAGS = ['Friendly', 'Playful', 'Calm', 'Energetic', 'Loyal', 'Shy', 'Smart', 'Cuddly', 'Protective', 'Curious'];
 
@@ -1264,16 +1264,24 @@ const AddPetModal = ({ onClose, onSubmit, initialData }: any) => {
   };
 
   const handleAddHealthRecord = () => {
-      if (!newLogData.description) return;
+      if (!newLogDesc.trim()) return;
       const log: HealthLog = {
           id: Math.random().toString(36).substr(2, 9),
-          petId: 'temp', // Will be replaced on submit
-          type: newLogData.type as any,
-          date: newLogData.date || new Date().toISOString().split('T')[0],
-          description: newLogData.description
+          petId: 'temp',
+          type: newLogType,
+          date: newLogDate,
+          description: newLogDesc,
+          attachments: newLogDocs
       };
       setPendingLogs([...pendingLogs, log]);
-      setNewLogData({ ...newLogData, description: '' });
+      setNewLogDesc('');
+      setNewLogDocs([]);
+  };
+
+  const handleHealthFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files?.[0]) {
+          setNewLogDocs(prev => [...prev, e.target.files![0].name]);
+      }
   };
 
   const removePendingLog = (id: string) => {
@@ -1465,38 +1473,54 @@ const AddPetModal = ({ onClose, onSubmit, initialData }: any) => {
 
              {activeSubTab === 'health' && (
                  <div className="animate-in slide-in-from-right duration-300 space-y-6">
-                     <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
-                         <h3 className="font-bold text-slate-800 dark:text-white mb-4">Add Health Record</h3>
-                         <div className="space-y-3">
-                             <div className="grid grid-cols-2 gap-3">
-                                 <select 
-                                    value={newLogData.type} 
-                                    onChange={e => setNewLogData({...newLogData, type: e.target.value as any})}
-                                    className="p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 outline-none"
-                                 >
-                                     <option>Checkup</option><option>Vaccination</option><option>Medication</option><option>Note</option>
-                                 </select>
-                                 <input 
-                                    type="date"
-                                    value={newLogData.date}
-                                    onChange={e => setNewLogData({...newLogData, date: e.target.value})}
-                                    className="p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 outline-none"
-                                 />
-                             </div>
-                             <textarea 
-                                placeholder="Details..."
-                                value={newLogData.description}
-                                onChange={e => setNewLogData({...newLogData, description: e.target.value})}
-                                className="w-full p-3 bg-white dark:bg-slate-900 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-700 outline-none resize-none h-20"
-                             />
-                             <button 
-                                onClick={handleAddHealthRecord}
-                                disabled={!newLogData.description}
-                                className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold shadow-md disabled:opacity-50 disabled:shadow-none"
-                             >
-                                 Add to List
-                             </button>
+                     <div className="space-y-4">
+                         <h3 className="font-bold text-slate-800 dark:text-white">Add Health Record</h3>
+
+                         <div className="grid grid-cols-2 gap-2">
+                             {(['Checkup', 'Vaccination', 'Medication', 'Note'] as const).map(t => (
+                                 <button key={t} onClick={() => setNewLogType(t)} className={`py-3 rounded-xl text-xs font-black uppercase tracking-wide border ${newLogType === t ? 'bg-orange-500 text-white border-orange-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-50 dark:border-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                                     {t}
+                                 </button>
+                             ))}
                          </div>
+
+                         <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-3">
+                             <div className="flex items-center gap-2 mb-2">
+                                 <Calendar size={16} className="text-slate-400" />
+                                 <input type="date" value={newLogDate} onChange={e => setNewLogDate(e.target.value)} className="bg-transparent font-bold text-slate-800 dark:text-white text-sm outline-none" />
+                             </div>
+                             <textarea
+                                 rows={3}
+                                 placeholder={newLogType === 'Medication' ? "Medicine name, dosage & frequency..." : "Describe health event..."}
+                                 value={newLogDesc}
+                                 onChange={e => setNewLogDesc(e.target.value)}
+                                 className="w-full bg-transparent font-medium text-slate-700 dark:text-slate-300 text-sm outline-none resize-none placeholder:text-slate-400"
+                             />
+                         </div>
+
+                         <div>
+                             <input type="file" ref={healthFileRef} className="hidden" onChange={handleHealthFileChange} />
+                             <button onClick={() => healthFileRef.current?.click()} className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors mb-2">
+                                 <FileText size={14} /> Attach Documents
+                             </button>
+                             {newLogDocs.length > 0 && (
+                                 <div className="flex flex-wrap gap-2">
+                                     {newLogDocs.map((doc, i) => (
+                                         <span key={i} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                                             {doc} <button onClick={() => setNewLogDocs(prev => prev.filter((_, idx) => idx !== i))}><X size={10} /></button>
+                                         </span>
+                                     ))}
+                                 </div>
+                             )}
+                         </div>
+
+                         <button
+                             onClick={handleAddHealthRecord}
+                             disabled={!newLogDesc.trim()}
+                             className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold shadow-md disabled:opacity-50 disabled:shadow-none active:scale-[0.99] transition-transform"
+                         >
+                             Add to List
+                         </button>
                      </div>
 
                      <div className="space-y-2">
